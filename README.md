@@ -5,6 +5,12 @@
 > it, host it.
 
 <p align="center">
+  <a href="https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2FYagoGodoyGarcia%2Fwacrm&env=NEXT_PUBLIC_SUPABASE_URL%2CNEXT_PUBLIC_SUPABASE_ANON_KEY%2CSUPABASE_SERVICE_ROLE_KEY%2CENCRYPTION_KEY%2CMETA_APP_SECRET%2CDEMO_MODE%2CNEXT_PUBLIC_DEMO_MODE%2CNEXT_PUBLIC_SITE_URL%2CNEXT_PUBLIC_APP_LOCALE&envDescription=Cole+as+credenciais+do+seu+projeto+Supabase+%28Project+Settings+%3E+API%29+e+as+configuracoes+do+WhatsApp.+Veja+.env.local.example+no+repositorio+para+o+significado+de+cada+variavel.&envLink=https%3A%2F%2Fgithub.com%2FYagoGodoyGarcia%2Fwacrm%2Fblob%2Fmain%2F.env.local.example&project-name=aposta-nacional-crm&repository-name=aposta-nacional-crm">
+    <img src="https://vercel.com/button" alt="Deploy with Vercel">
+  </a>
+</p>
+
+<p align="center">
   <a href="https://www.hostinger.com/web-apps-hosting">
     <img src="./.github/assets/hostinger-deploy.png" alt="Ship your Node.js app in one click — Deploy to Hostinger" width="900">
   </a>
