@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect } from "react";
 import { cn } from "@/lib/utils";
-import { BrandMark } from "@/components/brand-mark";
+import { BrandMark, accountInitials } from "@/components/brand-mark";
 import { useAuth } from "@/hooks/use-auth";
 import { useTotalUnread } from "@/hooks/use-total-unread";
 import { useUnreadNotifications } from "@/hooks/use-unread-notifications";
@@ -188,12 +188,27 @@ export function Sidebar({ open = false, onClose }: SidebarProps) {
         {/* Logo row. On mobile we put a close button here; on desktop the
             close button is hidden since the sidebar is always-visible. */}
         <div className="flex h-14 shrink-0 items-center justify-between gap-2 border-b border-border px-4">
-          <Link href="/dashboard" className="flex items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-              <BrandMark className="text-[13px] font-black" />
+          <Link href="/dashboard" className="flex min-w-0 items-center gap-2">
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+              {/* Per-account brand mark: shows the signed-in account's own
+                  initials once it's loaded (e.g. "TN" for Transportadora
+                  Nacional), falling back to the deployment's generic "AN"
+                  mark only while the account is still resolving. Previously
+                  this always rendered the hardcoded mark/title regardless
+                  of which account was active — see accountInitials(). */}
+              {account?.name ? (
+                <span className="text-[13px] font-black" aria-hidden>
+                  {accountInitials(account.name)}
+                </span>
+              ) : (
+                <BrandMark className="text-[13px] font-black" />
+              )}
             </div>
-            <span className="text-sm font-semibold text-foreground">
-              {t("title")}
+            <span
+              className="truncate text-sm font-semibold text-foreground"
+              title={account?.name || t("title")}
+            >
+              {account?.name || t("title")}
             </span>
           </Link>
           <button
