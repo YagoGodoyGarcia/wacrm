@@ -1,5 +1,6 @@
 "use client";
 
+import { Suspense } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useAuth } from "@/hooks/use-auth";
@@ -17,6 +18,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { ModeToggle } from "@/components/layout/mode-toggle";
+import { HelpTourButton } from "@/components/help/help-tour";
 
 const pageTitles: Record<string, string> = {
   "/dashboard": "dashboard",
@@ -74,6 +76,9 @@ export function Header({ onOpenSidebar }: HeaderProps) {
       </div>
 
       <div className="flex items-center gap-1 sm:gap-2">
+        <Suspense fallback={null}>
+          <HelpTourButton />
+        </Suspense>
         <ModeToggle />
 
         <DropdownMenu>

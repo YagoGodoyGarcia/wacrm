@@ -27,9 +27,11 @@ import {
   RefreshCw,
   PanelRightOpen,
   PanelRightClose,
+  Sparkles,
 } from "lucide-react";
 import { format, isToday, isYesterday, differenceInHours } from "date-fns";
-import { useTranslations } from "next-intl";
+import { useTranslations, useLocale } from "next-intl";
+import { dateFnsLocale } from "@/lib/date-fns-locale";
 import { Badge } from "@/components/ui/badge";
 import {
   DropdownMenu,
@@ -111,11 +113,11 @@ interface MessageThreadProps {
   onToggleContactPanel?: () => void;
 }
 
-function formatDateSeparator(dateStr: string, t: ReturnType<typeof useTranslations>): string {
+function formatDateSeparator(dateStr: string, t: ReturnType<typeof useTranslations>, locale: string): string {
   const date = new Date(dateStr);
   if (isToday(date)) return t("today");
   if (isYesterday(date)) return t("yesterday");
-  return format(date, "MMMM d, yyyy");
+  return format(date, "MMMM d, yyyy", { locale: dateFnsLocale(locale) });
 }
 
 function groupMessagesByDate(messages: Message[]) {
@@ -169,6 +171,7 @@ export function MessageThread({
   onToggleContactPanel,
 }: MessageThreadProps) {
   const t = useTranslations("Inbox.messageThread");
+  const locale = useLocale();
   const tTimer = useTranslations("Inbox.sessionTimer");
   const tQuote = useTranslations("Inbox.replyQuote");
 
@@ -192,6 +195,50 @@ export function MessageThread({
       }
     };
   }, []);
+  const [isSimulatingReply, setIsSimulatingReply] = useState(false);
+  const handleSimulateReply = useCallback(async () => {
+    if (isSimulatingReply || !conversation?.id) return;
+    setIsSimulatingReply(true);
+    try {
+      const res = await fetch("/api/demo/simulate-reply", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ conversationId: conversation.id }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        toast.error(data.error || "Falha ao simular resposta");
+      }
+    } catch {
+      toast.error("Falha ao simular resposta");
+    } finally {
+      setIsSimulatingReply(false);
+    }
+  }, [isSimulatingReply, conversation?.id]);
+
+  const [isTriggeringReactivation, setIsTriggeringReactivation] = useState(false);
+  const handleTriggerReactivation = useCallback(async () => {
+    if (isTriggeringReactivation || !contact?.id) return;
+    setIsTriggeringReactivation(true);
+    try {
+      const res = await fetch("/api/demo/trigger-reactivation", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ contactId: contact.id }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        toast.error(data.error || "Falha ao disparar reativação");
+      } else {
+        toast.success("Automação de reativação disparada");
+      }
+    } catch {
+      toast.error("Falha ao disparar reativação");
+    } finally {
+      setIsTriggeringReactivation(false);
+    }
+  }, [isTriggeringReactivation, contact?.id]);
+
   const handleRefreshClick = useCallback(() => {
     if (isRefreshing || !onRefresh) return;
     setIsRefreshing(true);
@@ -482,7 +529,7 @@ export function MessageThread({
         if (!res.ok) {
           const reason = payload?.error || `HTTP ${res.status}`;
           console.error("Failed to send message:", reason);
-          toast.error(`Failed to send: ${reason}`);
+          toast.error(t('sendFailed', { reason }));
           // Mark the optimistic bubble as failed so the user sees what happened
           onUpdateMessage(tempId, { status: "failed" });
           return;
@@ -495,7 +542,7 @@ export function MessageThread({
       } catch (err) {
         console.error("Failed to send message:", err);
         const reason = err instanceof Error ? err.message : "network error";
-        toast.error(`Failed to send: ${reason}`);
+        toast.error(t('sendFailed', { reason }));
         onUpdateMessage(tempId, { status: "failed" });
       }
     },
@@ -548,7 +595,7 @@ export function MessageThread({
         if (!res.ok) {
           const reason = data?.error || `HTTP ${res.status}`;
           console.error("Failed to send media:", reason);
-          toast.error(`Failed to send: ${reason}`);
+          toast.error(t('sendFailed', { reason }));
           onUpdateMessage(tempId, { status: "failed" });
           // The upload never reached the recipient — GC the orphaned
           // object rather than leaving it in the public bucket forever.
@@ -560,7 +607,7 @@ export function MessageThread({
       } catch (err) {
         console.error("Failed to send media:", err);
         const reason = err instanceof Error ? err.message : "network error";
-        toast.error(`Failed to send: ${reason}`);
+        toast.error(t('sendFailed', { reason }));
         onUpdateMessage(tempId, { status: "failed" });
         void deleteAccountMedia(CHAT_MEDIA_BUCKET, payload.path).catch(() => {});
       }
@@ -605,7 +652,7 @@ export function MessageThread({
         if (!res.ok) {
           const reason = data?.error || `HTTP ${res.status}`;
           console.error("Failed to send interactive message:", reason);
-          toast.error(`Failed to send: ${reason}`);
+          toast.error(t('sendFailed', { reason }));
           onUpdateMessage(tempId, { status: "failed" });
           return;
         }
@@ -614,7 +661,7 @@ export function MessageThread({
       } catch (err) {
         console.error("Failed to send interactive message:", err);
         const reason = err instanceof Error ? err.message : "network error";
-        toast.error(`Failed to send: ${reason}`);
+        toast.error(t('sendFailed', { reason }));
         onUpdateMessage(tempId, { status: "failed" });
       }
     },
@@ -694,7 +741,7 @@ export function MessageThread({
         if (!res.ok) {
           const reason = payload?.error || `HTTP ${res.status}`;
           console.error("Failed to send template:", reason);
-          toast.error(`Failed to send template: ${reason}`);
+          toast.error(t('templateSendFailed', { reason }));
           onUpdateMessage(tempId, { status: "failed" });
           return;
         }
@@ -703,7 +750,7 @@ export function MessageThread({
       } catch (err) {
         console.error("Failed to send template:", err);
         const reason = err instanceof Error ? err.message : "network error";
-        toast.error(`Failed to send template: ${reason}`);
+        toast.error(t('templateSendFailed', { reason }));
         onUpdateMessage(tempId, { status: "failed" });
       }
     },
@@ -764,7 +811,7 @@ export function MessageThread({
         return;
       }
       if (messageId.startsWith("temp-")) {
-        toast.error("Wait for the message to finish sending");
+        toast.error("Aguarde a mensagem terminar de enviar");
         return;
       }
 
@@ -810,7 +857,7 @@ export function MessageThread({
         }
       } catch (err) {
         const reason = err instanceof Error ? err.message : "network error";
-        toast.error(`Reaction failed: ${reason}`);
+        toast.error(t('reactionFailed', { reason }));
         setReactions(snapshot);
       }
     },
@@ -829,7 +876,7 @@ export function MessageThread({
 
       if (error) {
         console.error("Failed to update assignment:", error);
-        toast.error("Failed to update assignment");
+        toast.error("Falha ao atualizar atribuição");
         return;
       }
 
@@ -965,6 +1012,40 @@ export function MessageThread({
             </button>
           )}
 
+          {/* Demo-mode only — fires a simulated customer reply into this
+              conversation right now, via the real inbound-processing
+              pipeline (automations/flows/dashboard all react normally).
+              Only rendered when NEXT_PUBLIC_DEMO_MODE is set. */}
+          {process.env.NEXT_PUBLIC_DEMO_MODE === "true" && (
+            <button
+              type="button"
+              onClick={handleSimulateReply}
+              disabled={isSimulatingReply}
+              aria-label={t("simulateReply")}
+              title={t("simulateReply")}
+              className="inline-flex h-7 items-center gap-1 rounded-md px-2 text-xs text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:opacity-60"
+            >
+              <Sparkles className={cn("h-3.5 w-3.5", isSimulatingReply && "animate-pulse")} />
+              <span className="hidden sm:inline">{t("simulateReply")}</span>
+            </button>
+          )}
+
+          {process.env.NEXT_PUBLIC_DEMO_MODE === "true" && (
+            <button
+              type="button"
+              onClick={handleTriggerReactivation}
+              disabled={isTriggeringReactivation}
+              aria-label={t("triggerReactivation")}
+              title={t("triggerReactivationTitle")}
+              className="inline-flex h-7 items-center gap-1 rounded-md px-2 text-xs text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:opacity-60"
+            >
+              <Sparkles className={cn("h-3.5 w-3.5", isTriggeringReactivation && "animate-pulse")} />
+              <span className="hidden sm:inline">{t("triggerReactivation")}</span>
+            </button>
+          )}
+
+          {/* Status + assign — grouped for the help tour */}
+          <div data-tour="inbox-status-assign" className="contents">
           {/* Status dropdown */}
           <DropdownMenu>
             <DropdownMenuTrigger className={cn(
@@ -1054,6 +1135,7 @@ export function MessageThread({
               )}
             </DropdownMenuContent>
           </DropdownMenu>
+          </div>
         </div>
       </div>
 
@@ -1077,7 +1159,7 @@ export function MessageThread({
                 {/* Date separator */}
                 <div className="mb-4 flex items-center justify-center">
                   <span className="rounded-full bg-muted px-3 py-1 text-[10px] font-medium text-muted-foreground">
-                    {formatDateSeparator(group.date, t)}
+                    {formatDateSeparator(group.date, t, locale)}
                   </span>
                 </div>
                 {/* Messages */}
@@ -1150,16 +1232,18 @@ export function MessageThread({
       />
 
       {/* Composer */}
-      <MessageComposer
-        conversationId={conversation.id}
-        sessionExpired={sessionInfo.expired}
-        onSend={handleSend}
-        onSendMedia={handleSendMedia}
-        onSendInteractive={handleSendInteractive}
-        onOpenTemplates={handleOpenTemplates}
-        replyTo={replyTo}
-        onClearReply={() => setReplyTo(null)}
-      />
+      <div data-tour="inbox-composer">
+        <MessageComposer
+          conversationId={conversation.id}
+          sessionExpired={sessionInfo.expired}
+          onSend={handleSend}
+          onSendMedia={handleSendMedia}
+          onSendInteractive={handleSendInteractive}
+          onOpenTemplates={handleOpenTemplates}
+          replyTo={replyTo}
+          onClearReply={() => setReplyTo(null)}
+        />
+      </div>
 
       <TemplatePicker
         open={templateModalOpen}

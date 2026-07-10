@@ -90,6 +90,63 @@ npm run dev
 Open <http://localhost:3000>. You'll be redirected to `/login` (or
 `/dashboard` if already signed in).
 
+## Demo mode
+
+Run a full sales demo — populated dashboard, inbox, pipeline, and
+automations — without a real Meta app or WhatsApp Business number.
+Every outbound WhatsApp Cloud API call is faked; everything else
+(Supabase, RLS, automations, Flows, dashboard) is 100% real.
+
+```bash
+cp .env.local.example .env.local   # fill in your real Supabase project
+# then add to .env.local:
+#   DEMO_MODE=true
+#   NEXT_PUBLIC_DEMO_MODE=true
+
+npm install
+npm run demo:setup                 # one-time: creates login + seeds data
+npm run dev
+```
+
+Log in with `demo@wacrm.local` / `DemoRifa123!` (or whatever
+`DEMO_USER_EMAIL`/`DEMO_USER_PASSWORD` you set). You'll find:
+
+- ~40 contacts tagged `ativo` / `inativo 30-60 dias` / `inativo 60+ dias`,
+  with realistic conversation history.
+- A "Rifas" pipeline with deals across every stage.
+- 3 ready-to-send message templates and 2 historical broadcasts.
+- Two active automations: tagging a contact `inativo 60+ dias` sends a
+  reactivation template; a reply from a tagged contact removes the tag
+  and assigns + notifies an agent.
+
+While a conversation is open in the inbox, two demo-only buttons let
+you drive the story live: **Simulate reply** (a fake customer reply
+lands right now) and **Trigger reactivation** (tags the open contact
+`inativo 60+ dias` and fires the reactivation automation). Sending the
+seeded broadcast also ticks delivered/read on its own and occasionally
+triggers a simulated reply a few seconds later — no clicking required.
+
+Run `npm run demo:reset` any time to wipe and reseed (safe to run
+repeatedly; it never touches your Supabase project's other data or
+your login itself).
+
+### Switching to production
+
+Two ways, no code changes either way:
+
+1. **Recommended** — in the running app, go to **Settings → WhatsApp
+   Integration** and paste your real Phone Number ID, WhatsApp
+   Business Account ID, and access token (from
+   [Meta for Developers](https://developers.facebook.com) → your App
+   → WhatsApp → API Setup). Then set `DEMO_MODE=false` (or remove it)
+   and restart.
+2. **Env vars** — set `WA_PHONE_NUMBER_ID`, `WA_BUSINESS_ACCOUNT_ID`,
+   and `CLOUD_API_ACCESS_TOKEN` in `.env.local`, leave `DEMO_MODE`
+   unset, and run `npm run demo:setup` again — it saves those
+   credentials to your account directly. Either way, open Settings →
+   WhatsApp → "Verify Registration" once afterward to confirm the
+   number is live for inbound messages.
+
 ## 🚀 Deploy on Hostinger (recommended)
 
 <p align="center">

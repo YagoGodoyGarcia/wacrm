@@ -44,6 +44,7 @@ import {
 } from '@/lib/whatsapp/phone-utils';
 import type { MessageTemplate } from '@/types';
 import { isMessageTemplate } from '@/lib/whatsapp/template-row-guard';
+import { scheduleDemoStatusTicks, maybeScheduleAutoReply } from '@/lib/demo/simulate-inbound';
 
 export const MEDIA_KINDS = ['image', 'video', 'document', 'audio'] as const;
 export const VALID_MESSAGE_TYPES = [
@@ -428,6 +429,17 @@ export async function sendMessageToConversation(
       err instanceof Error ? err.message : 'Unknown Meta API error';
     console.error('[send-message] Meta send failed for all variants:', message);
     throw new SendMessageError('meta_error', `Meta API error: ${message}`, 502);
+  }
+
+  // Demo mode "looks alive" scheduling — no-ops outside DEMO_MODE.
+  scheduleDemoStatusTicks(waMessageId);
+  if (messageType === 'template') {
+    maybeScheduleAutoReply({
+      accountId,
+      configOwnerUserId: config.user_id,
+      contactId: contact.id,
+      contactPhone: workingPhone,
+    });
   }
 
   if (workingPhone !== sanitizedPhone) {

@@ -138,9 +138,13 @@ export async function POST(request: Request) {
       )
     }
 
+    // DEMO_MODE implies dry-run too — a demo template submission
+    // shouldn't need a real waba_id/access_token or attempt the
+    // (unmocked) resumable media upload for image headers.
     const dryRun =
       process.env.WHATSAPP_TEMPLATES_DRY_RUN === 'true' ||
-      process.env.WHATSAPP_TEMPLATES_DRY_RUN === '1'
+      process.env.WHATSAPP_TEMPLATES_DRY_RUN === '1' ||
+      process.env.DEMO_MODE === 'true'
 
     let metaTemplateId: string
     let metaStatus: string

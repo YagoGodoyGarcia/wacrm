@@ -15,7 +15,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { MessageSquare, UsersRound } from "lucide-react";
+import { UsersRound } from "lucide-react";
+import { BrandMark } from "@/components/brand-mark";
 
 // `useSearchParams` opts the component out of static prerendering
 // unless it sits under a Suspense boundary. We split the form into
@@ -38,8 +39,13 @@ function LoginPageInner() {
   const inviteToken = searchParams.get("invite");
   const t = useTranslations("LoginPage");
 
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  // Demo mode convenience — pre-fill the login form with the seed
+  // script's default credentials (scripts/demo-setup.ts) so a client
+  // clicking a shared demo link can sign in with one click. Only
+  // active when NEXT_PUBLIC_DEMO_MODE is set; never affects production.
+  const isDemoMode = process.env.NEXT_PUBLIC_DEMO_MODE === "true";
+  const [email, setEmail] = useState(isDemoMode ? "demo@wacrm.local" : "");
+  const [password, setPassword] = useState(isDemoMode ? "DemoRifa123!" : "");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const router = useRouter();
@@ -76,7 +82,7 @@ function LoginPageInner() {
             {inviteToken ? (
               <UsersRound className="h-6 w-6 text-primary" />
             ) : (
-              <MessageSquare className="h-6 w-6 text-primary" />
+              <BrandMark className="text-xl font-black text-primary" />
             )}
           </div>
           <CardTitle className="text-xl text-foreground">

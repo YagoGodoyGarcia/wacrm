@@ -1,7 +1,7 @@
 import { ImageResponse } from "next/og";
 
-// Replaces the default Next.js favicon with the brand mark — Hostinger
-// violet rounded square + white chat-square glyph — matching the
+// Replaces the default Next.js favicon with the brand mark — Aposta
+// Nacional blue rounded square + white "AN" monogram — matching the
 // sidebar logo in `src/components/layout/sidebar.tsx`. Next.js renders
 // this at build time and auto-injects <link rel="icon"> into <head>.
 //
@@ -22,22 +22,20 @@ export default function Icon() {
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          background: "#7c3aed", // primary (Hostinger-aligned purple)
+          background: "#024997", // Aposta Nacional primary blue
           borderRadius: 6,
         }}
       >
-        <svg
-          width="20"
-          height="20"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="#ffffff"
-          strokeWidth="2.5"
-          strokeLinecap="round"
-          strokeLinejoin="round"
+        <span
+          style={{
+            color: "#ffffff",
+            fontSize: 15,
+            fontWeight: 900,
+            letterSpacing: "-0.06em",
+          }}
         >
-          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-        </svg>
+          AN
+        </span>
       </div>
     ),
     { ...size },

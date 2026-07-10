@@ -141,7 +141,8 @@ export function ApiKeysSettings() {
         description={
           t.rich('description', {
             apiCode: (chunks: React.ReactNode) => <code className="text-xs">{chunks}</code>,
-            headerCode: (chunks: React.ReactNode) => <code className="text-xs">{chunks}</code>
+            headerCode: (chunks: React.ReactNode) => <code className="text-xs">{chunks}</code>,
+            token: '<key>',
           })
         }
         action={

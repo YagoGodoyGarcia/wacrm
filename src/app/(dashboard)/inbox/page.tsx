@@ -568,6 +568,7 @@ export default function InboxPage() {
             Hidden on mobile when a conversation is selected so the
             thread can occupy the full width. Always visible on lg+. */}
         <div
+          data-tour="inbox-conversation-list"
           className={cn(
             "flex h-full flex-1 lg:flex-none",
             hasActiveConv ? "hidden lg:flex" : "flex",
@@ -620,7 +621,7 @@ export default function InboxPage() {
             On mobile it's always hidden (the `lg:block` below), so the
             toggle — which is itself desktop-only — never affects it. */}
         {contactPanelOpen && (
-          <div className="hidden lg:block">
+          <div data-tour="inbox-contact-sidebar" className="hidden lg:block">
             <ContactSidebar contact={activeContact} />
           </div>
         )}

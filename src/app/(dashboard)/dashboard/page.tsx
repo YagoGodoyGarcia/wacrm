@@ -132,7 +132,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Metric cards */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div data-tour="dashboard-metrics" className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {metricsLoading || !metrics ? (
           Array.from({ length: 4 }).map((_, i) => <SkeletonCard key={i} />)
         ) : (
@@ -189,7 +189,9 @@ export default function DashboardPage() {
       </div>
 
       {/* Quick actions */}
-      <QuickActions />
+      <div data-tour="dashboard-quick-actions">
+        <QuickActions />
+      </div>
 
       {/* Charts row */}
       {/* items-stretch (the grid default) stretches the two columns to
@@ -199,7 +201,7 @@ export default function DashboardPage() {
           this, the pipeline card rendered at its natural (shorter)
           height while the line chart drove the row height. */}
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-5">
-        <div className="h-full lg:col-span-3">
+        <div data-tour="dashboard-conversations-chart" className="h-full lg:col-span-3">
           <ConversationsChart
             series={series}
             loading={seriesLoading}
@@ -207,7 +209,7 @@ export default function DashboardPage() {
             onRangeChange={handleRangeChange}
           />
         </div>
-        <div className="h-full lg:col-span-2">
+        <div data-tour="dashboard-pipeline-chart" className="h-full lg:col-span-2">
           <PipelineDonut
             data={pipeline}
             loading={pipelineLoading}

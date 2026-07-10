@@ -2,6 +2,7 @@
 
 import {
   createContext,
+  Suspense,
   useContext,
   useEffect,
   useState,
@@ -35,6 +36,7 @@ import {
   List,
 } from "lucide-react"
 
+import { HelpTourButton } from "@/components/help/help-tour"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
@@ -724,6 +726,7 @@ export function AutomationBuilder({ initial }: { initial: BuilderInitial }) {
           <ArrowLeft className="h-4 w-4" />
         </button>
         <input
+          data-tour="automation-name"
           value={state.name}
           onChange={(e) => patchTop("name", e.target.value)}
           placeholder={t("untitled")}
@@ -737,18 +740,27 @@ export function AutomationBuilder({ initial }: { initial: BuilderInitial }) {
             aria-label={t("activeAria")}
           />
         </div>
-        <Button
-          onClick={save}
-          disabled={saving}
-          className="bg-primary text-primary-foreground hover:bg-primary/90"
-        >
-          {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
-          {isEditing ? t("save") : t("saveDraft")}
-        </Button>
+        <span data-tour="automation-save">
+          <Button
+            onClick={save}
+            disabled={saving}
+            className="bg-primary text-primary-foreground hover:bg-primary/90"
+          >
+            {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+            {isEditing ? t("save") : t("saveDraft")}
+          </Button>
+        </span>
+        {/* This page's own header sits `fixed inset-0` above the
+            dashboard shell, covering the global Header (and its help
+            button) entirely — so the tour trigger is rendered again
+            here, local to this screen. */}
+        <Suspense fallback={null}>
+          <HelpTourButton />
+        </Suspense>
       </header>
 
       {/* Canvas */}
-      <div className="relative flex-1 overflow-y-auto">
+      <div data-tour="automation-canvas" className="relative flex-1 overflow-y-auto">
         <div className="absolute inset-0 bg-[radial-gradient(circle,var(--border)_1px,transparent_1px)] [background-size:20px_20px] pointer-events-none" />
         <div className="relative mx-auto flex max-w-2xl flex-col items-center gap-0 px-4 py-10">
           <ResourcesProvider>
@@ -866,7 +878,7 @@ function TriggerCard({
                   {t("schedule")}
                 </label>
                 <Input
-                  placeholder="Cron expression or HH:mm"
+                  placeholder={t("schedulePlaceholder")}
                   value={(config.schedule as string) ?? ""}
                   onChange={(e) =>
                     onConfigChange({ ...config, schedule: e.target.value })
@@ -1362,7 +1374,7 @@ function StepEditor({
             <Input
               value={(cfg.value as string) ?? ""}
               onChange={(e) => set({ value: e.target.value })}
-              placeholder={t("config.placeholderValue")}
+              placeholder={t.raw("config.placeholderValue")}
               className="bg-muted text-foreground"
             />
           </FieldBlock>

@@ -255,7 +255,7 @@ export function AiConfig() {
       )}
 
       <div className="space-y-6">
-        <Card>
+        <Card data-tour="agent-provider-key">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base">
               <Sparkles className="h-4 w-4 text-primary" /> {t('providerAndKey')}
@@ -381,7 +381,7 @@ export function AiConfig() {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card data-tour="agent-behaviour">
           <CardHeader>
             <CardTitle className="text-base">{t('behaviour')}</CardTitle>
             <CardDescription>

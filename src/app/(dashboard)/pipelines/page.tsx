@@ -366,7 +366,7 @@ export default function PipelinesPage() {
           </DropdownMenu>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div data-tour="pipeline-add-deal" className="flex items-center gap-2">
           <GatedButton
             variant="outline"
             canAct={canEditSettings}

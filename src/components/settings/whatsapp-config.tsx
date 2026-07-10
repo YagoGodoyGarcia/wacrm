@@ -159,7 +159,7 @@ export function WhatsAppConfig() {
       }
     } catch (err) {
       console.error('fetchConfig error:', err);
-      toast.error('Failed to load WhatsApp configuration');
+      toast.error('Falha ao carregar configuração do WhatsApp');
     } finally {
       setLoading(false);
     }
@@ -184,11 +184,11 @@ export function WhatsAppConfig() {
 
   async function handleSave() {
     if (!phoneNumberId.trim()) {
-      toast.error('Phone Number ID is required');
+      toast.error('O ID do Número de Telefone é obrigatório');
       return;
     }
     if (!config && (!accessToken.trim() || !tokenEdited)) {
-      toast.error('Access Token is required for initial setup');
+      toast.error('O Token de Acesso é obrigatório para a configuração inicial');
       return;
     }
 
@@ -216,7 +216,7 @@ export function WhatsAppConfig() {
         // server. But our POST handler requires an access_token to verify
         // with Meta. If the user didn't change the token, we need to signal
         // that. Simplest: require token re-entry if they're updating.
-        toast.error('Please re-enter the Access Token to save changes');
+        toast.error('Digite novamente o Token de Acesso para salvar as alterações');
         setSaving(false);
         return;
       }
@@ -230,7 +230,7 @@ export function WhatsAppConfig() {
       const data = await res.json();
 
       if (!res.ok) {
-        toast.error(data.error || 'Failed to save configuration');
+        toast.error(data.error || 'Falha ao salvar configuração');
         setSaving(false);
         return;
       }
@@ -271,7 +271,7 @@ export function WhatsAppConfig() {
       if (accountId) await fetchConfig(accountId);
     } catch (err) {
       console.error('Save error:', err);
-      toast.error('Failed to save configuration');
+      toast.error('Falha ao salvar configuração');
     } finally {
       setSaving(false);
     }
@@ -301,7 +301,7 @@ export function WhatsAppConfig() {
     } catch (err) {
       console.error('Test connection error:', err);
       setConnectionStatus('disconnected');
-      toast.error('Connection test failed. Check network and try again.');
+      toast.error('Falha no teste de conexão. Verifique a rede e tente novamente.');
     } finally {
       setTesting(false);
     }
@@ -317,7 +317,7 @@ export function WhatsAppConfig() {
       const data = (await res.json()) as RegistrationProbe;
       setRegistrationProbe(data);
       if (data.live) {
-        toast.success('Number is fully wired — Meta is delivering events.');
+        toast.success('Número totalmente conectado — a Meta está entregando eventos.');
       } else {
         toast.error(
           'Number is not fully registered. See the checks below for which step failed.',
@@ -327,7 +327,7 @@ export function WhatsAppConfig() {
       if (accountId) await fetchConfig(accountId);
     } catch (err) {
       console.error('verify-registration failed:', err);
-      toast.error('Could not reach the verification endpoint.');
+      toast.error('Não foi possível conectar ao endpoint de verificação.');
     } finally {
       setVerifyingRegistration(false);
     }
@@ -344,11 +344,11 @@ export function WhatsAppConfig() {
       const data = await res.json();
 
       if (!res.ok) {
-        toast.error(data.error || 'Failed to reset configuration');
+        toast.error(data.error || 'Falha ao redefinir configuração');
         return;
       }
 
-      toast.success('Configuration cleared. You can now re-enter your credentials.');
+      toast.success('Configuração limpa. Agora você pode inserir novamente suas credenciais.');
       setConfig(null);
       setPhoneNumberId('');
       setWabaId('');
@@ -360,7 +360,7 @@ export function WhatsAppConfig() {
       setStatusMessage('');
     } catch (err) {
       console.error('Reset error:', err);
-      toast.error('Failed to reset configuration');
+      toast.error('Falha ao redefinir configuração');
     } finally {
       setResetting(false);
     }
@@ -368,7 +368,7 @@ export function WhatsAppConfig() {
 
   function handleCopyWebhookUrl() {
     navigator.clipboard.writeText(webhookUrl);
-    toast.success('Webhook URL copied to clipboard');
+    toast.success('URL do webhook copiada');
   }
 
   if (loading) {
@@ -432,7 +432,7 @@ export function WhatsAppConfig() {
         )}
 
         {/* Connection Status */}
-        <Alert className="bg-card border-border">
+        <Alert data-tour="whatsapp-status" className="bg-card border-border">
           <div className="flex items-center gap-2">
             {connectionStatus === 'connected' ? (
               <CheckCircle2 className="size-4 text-primary" />
@@ -555,7 +555,7 @@ export function WhatsAppConfig() {
         )}
 
         {/* API Credentials */}
-        <Card>
+        <Card data-tour="whatsapp-form">
           <CardHeader>
             <CardTitle className="text-foreground">{t('apiCredentialsTitle')}</CardTitle>
             <CardDescription className="text-muted-foreground">
@@ -794,9 +794,9 @@ export function WhatsAppConfig() {
                 <AccordionContent className="text-muted-foreground">
                   <ol className="list-decimal list-inside space-y-1 text-sm">
                     <li>{t('step3_1')}</li>
-                    <li dangerouslySetInnerHTML={{ __html: t('step3_2') }} />
-                    <li dangerouslySetInnerHTML={{ __html: t('step3_3') }} />
-                    <li dangerouslySetInnerHTML={{ __html: t('step3_4') }} />
+                    <li dangerouslySetInnerHTML={{ __html: t.raw('step3_2') }} />
+                    <li dangerouslySetInnerHTML={{ __html: t.raw('step3_3') }} />
+                    <li dangerouslySetInnerHTML={{ __html: t.raw('step3_4') }} />
                   </ol>
                 </AccordionContent>
               </AccordionItem>
@@ -812,8 +812,8 @@ export function WhatsAppConfig() {
                   <ol className="list-decimal list-inside space-y-1 text-sm">
                     <li>{t('step4_1')}</li>
                     <li>{t('step4_2')}</li>
-                    <li dangerouslySetInnerHTML={{ __html: t('step4_3') }} />
-                    <li dangerouslySetInnerHTML={{ __html: t('step4_4') }} />
+                    <li dangerouslySetInnerHTML={{ __html: t.raw('step4_3') }} />
+                    <li dangerouslySetInnerHTML={{ __html: t.raw('step4_4') }} />
                     <li>{t('step4_5')}</li>
                   </ol>
                 </AccordionContent>

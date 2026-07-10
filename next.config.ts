@@ -65,6 +65,15 @@ const SECURITY_HEADERS = [
 
 const nextConfig: NextConfig = {
   /**
+   * Dev-only: lets the dev server be reached through a tunnel (ngrok,
+   * Cloudflare Tunnel) for sharing a local demo — e.g. `npm run dev`
+   * exposed via `ngrok http 3000`. Next.js blocks cross-origin requests
+   * to dev assets by default; without this, pages load but hydration
+   * silently fails (no client-side interactivity, forms fall back to a
+   * native full-page submit). Has zero effect in production.
+   */
+  allowedDevOrigins: ["*.ngrok-free.app", "*.ngrok.io", "*.ngrok.app"],
+  /**
    * Cache-Control policy.
    *
    * Why this exists:

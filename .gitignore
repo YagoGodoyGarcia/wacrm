@@ -42,3 +42,10 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# supabase CLI local state
+supabase/.temp/
+
+# sales/marketing collateral (not part of the app)
+/sales-screenshots/
+/AutoMyde-Apresentacao-Comercial.pptx

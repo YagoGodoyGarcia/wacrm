@@ -29,6 +29,7 @@ import {
 import { isMessageTemplate } from '@/lib/whatsapp/template-row-guard';
 import type { MessageTemplate } from '@/types';
 import { findOrCreateContact } from '@/lib/api/v1/contacts';
+import { scheduleDemoStatusTicks, maybeScheduleAutoReply } from '@/lib/demo/simulate-inbound';
 
 /** Thrown by createBroadcast on a caller-visible failure; route maps it. */
 export class BroadcastError extends Error {
@@ -58,6 +59,7 @@ export interface CreateBroadcastParams {
 
 interface PlannedRecipient {
   recipientRowId: string;
+  contactId: string;
   phone: string;
   params: string[];
 }
@@ -72,6 +74,10 @@ export interface BroadcastPlan {
   planned: PlannedRecipient[];
   /** Phones rejected up front (invalid E.164) — counted as failed. */
   rejected: number;
+  /** Tenancy + audit — needed by the demo-mode "looks alive" scheduler
+   *  (status ticks + simulated replies) fired from deliverBroadcast. */
+  accountId: string;
+  configOwnerUserId: string;
 }
 
 const MAX_RECIPIENTS = 1000;
@@ -231,7 +237,12 @@ export async function createBroadcast(
   const byContact = new Map(deduped.map((r) => [r.contactId, r]));
   const planned: PlannedRecipient[] = recipientRows.map((row) => {
     const r = byContact.get(row.contact_id as string)!;
-    return { recipientRowId: row.id as string, phone: r.phone, params: r.params };
+    return {
+      recipientRowId: row.id as string,
+      contactId: row.contact_id as string,
+      phone: r.phone,
+      params: r.params,
+    };
   });
 
   return {
@@ -243,6 +254,8 @@ export async function createBroadcast(
     templateRow,
     planned,
     rejected,
+    accountId,
+    configOwnerUserId: config.user_id,
   };
 }
 
@@ -303,6 +316,15 @@ export async function deliverBroadcast(
           error_message: null,
         })
         .eq('id', recipient.recipientRowId);
+
+      // Demo mode "looks alive" scheduling — no-ops outside DEMO_MODE.
+      scheduleDemoStatusTicks(sentMessageId);
+      maybeScheduleAutoReply({
+        accountId: plan.accountId,
+        configOwnerUserId: plan.configOwnerUserId,
+        contactId: recipient.contactId,
+        contactPhone: recipient.phone,
+      });
     } else {
       await db
         .from('broadcast_recipients')

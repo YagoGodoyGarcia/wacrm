@@ -140,7 +140,7 @@ export default function NewBroadcastPage() {
       </div>
 
       {/* Step Indicator */}
-      <div className="flex items-center justify-between">
+      <div data-tour="broadcast-wizard-steps" className="flex items-center justify-between">
         {steps.map((step, index) => {
           const isActive = index === currentStep;
           const isCompleted = index < currentStep;

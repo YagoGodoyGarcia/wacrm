@@ -9,6 +9,17 @@
  * instead of a runtime rejection from Meta.
  */
 
+import {
+  isDemoMode,
+  mockSendResult,
+  mockPhoneInfo,
+  mockRegisterResult,
+  mockSubscribeResult,
+  mockSubscribedApps,
+  mockSubmitTemplateResult,
+  mockEditTemplateResult,
+} from './demo-mock'
+
 const META_API_VERSION = 'v21.0'
 const META_API_BASE = `https://graph.facebook.com/${META_API_VERSION}`
 
@@ -55,6 +66,7 @@ export async function verifyPhoneNumber(
   args: VerifyPhoneNumberArgs
 ): Promise<MetaPhoneInfo> {
   const { phoneNumberId, accessToken } = args
+  if (isDemoMode()) return mockPhoneInfo(phoneNumberId)
   const url = `${META_API_BASE}/${phoneNumberId}?fields=id,display_phone_number,verified_name,quality_rating`
   const response = await fetch(url, {
     headers: { Authorization: `Bearer ${accessToken}` },
@@ -124,6 +136,7 @@ export async function registerPhoneNumber(
   args: RegisterPhoneNumberArgs
 ): Promise<RegisterPhoneNumberResult> {
   const { phoneNumberId, accessToken, pin } = args
+  if (isDemoMode()) return mockRegisterResult()
   const url = `${META_API_BASE}/${phoneNumberId}/register`
   const response = await fetch(url, {
     method: 'POST',
@@ -168,6 +181,7 @@ export async function subscribeWabaToApp(
   args: SubscribeWabaToAppArgs
 ): Promise<void> {
   const { wabaId, accessToken } = args
+  if (isDemoMode()) return mockSubscribeResult()
   const url = `${META_API_BASE}/${wabaId}/subscribed_apps`
   const response = await fetch(url, {
     method: 'POST',
@@ -200,6 +214,7 @@ export async function getSubscribedApps(
   args: GetSubscribedAppsArgs
 ): Promise<SubscribedApp[]> {
   const { wabaId, accessToken } = args
+  if (isDemoMode()) return mockSubscribedApps()
   const url = `${META_API_BASE}/${wabaId}/subscribed_apps`
   const response = await fetch(url, {
     headers: { Authorization: `Bearer ${accessToken}` },
@@ -233,6 +248,7 @@ export async function sendTextMessage(
   args: SendTextMessageArgs
 ): Promise<MetaSendResult> {
   const { phoneNumberId, accessToken, to, text, contextMessageId } = args
+  if (isDemoMode()) return mockSendResult()
   const url = `${META_API_BASE}/${phoneNumberId}/messages`
   const body: Record<string, unknown> = {
     messaging_product: 'whatsapp',
@@ -292,6 +308,7 @@ export async function sendMediaMessage(
 ): Promise<MetaSendResult> {
   const { phoneNumberId, accessToken, to, kind, link, caption, filename, contextMessageId } = args
   if (!link) throw new Error('sendMediaMessage requires a link.')
+  if (isDemoMode()) return mockSendResult()
   const url = `${META_API_BASE}/${phoneNumberId}/messages`
 
   // Audio accepts neither caption nor filename per Meta's spec — adding
@@ -387,6 +404,7 @@ export async function sendTemplateMessage(
     messageParams,
     contextMessageId,
   } = args
+  if (isDemoMode()) return mockSendResult()
   const url = `${META_API_BASE}/${phoneNumberId}/messages`
 
   const templatePayload: Record<string, unknown> = {
@@ -555,6 +573,7 @@ export async function submitMessageTemplate(
   args: SubmitMessageTemplateArgs
 ): Promise<SubmitMessageTemplateResult> {
   const { wabaId, accessToken, payload } = args
+  if (isDemoMode()) return mockSubmitTemplateResult()
   const url = `${META_API_BASE}/${wabaId}/message_templates`
   const response = await fetch(url, {
     method: 'POST',
@@ -606,6 +625,7 @@ export async function editMessageTemplate(
   args: EditMessageTemplateArgs
 ): Promise<EditMessageTemplateResult> {
   const { metaTemplateId, accessToken, components, category } = args
+  if (isDemoMode()) return mockEditTemplateResult()
   const body: Record<string, unknown> = { components }
   if (category) body.category = category
   const response = await fetch(`${META_API_BASE}/${metaTemplateId}`, {
@@ -644,6 +664,7 @@ export async function deleteMessageTemplate(
   args: DeleteMessageTemplateArgs
 ): Promise<void> {
   const { wabaId, accessToken, name, metaTemplateId } = args
+  if (isDemoMode()) return
   const params = new URLSearchParams({ name })
   if (metaTemplateId) params.set('hsm_id', metaTemplateId)
   const url = `${META_API_BASE}/${wabaId}/message_templates?${params.toString()}`
@@ -681,6 +702,7 @@ export async function sendReactionMessage(
   args: SendReactionMessageArgs
 ): Promise<MetaSendResult> {
   const { phoneNumberId, accessToken, to, targetMessageId, emoji } = args
+  if (isDemoMode()) return mockSendResult()
   const url = `${META_API_BASE}/${phoneNumberId}/messages`
   const response = await fetch(url, {
     method: 'POST',
@@ -817,6 +839,7 @@ export async function sendInteractiveButtons(
   }
   if (contextMessageId) body.context = { message_id: contextMessageId }
 
+  if (isDemoMode()) return mockSendResult()
   const url = `${META_API_BASE}/${phoneNumberId}/messages`
   const response = await fetch(url, {
     method: 'POST',
@@ -949,6 +972,7 @@ export async function sendInteractiveList(
   }
   if (contextMessageId) body.context = { message_id: contextMessageId }
 
+  if (isDemoMode()) return mockSendResult()
   const url = `${META_API_BASE}/${phoneNumberId}/messages`
   const response = await fetch(url, {
     method: 'POST',

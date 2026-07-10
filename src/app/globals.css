@@ -148,6 +148,20 @@ html[data-mode="light"] {
 /* ---- ACCENT: primary color ---- */
 
 :root,
+html[data-theme="national"] {
+  --primary: oklch(0.416 0.142 256.4);
+  --primary-foreground: oklch(0.985 0 0);
+  --primary-hover: oklch(0.553 0.154 253);
+  --primary-soft: oklch(0.416 0.142 256.4 / 0.12);
+  --primary-soft-2: oklch(0.416 0.142 256.4 / 0.22);
+  --ring: oklch(0.416 0.142 256.4);
+  --chart-1: oklch(0.416 0.142 256.4);
+  --chart-2: oklch(0.704 0.149 250.5);
+  --sidebar-primary: oklch(0.416 0.142 256.4);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-ring: oklch(0.416 0.142 256.4);
+}
+
 html[data-theme="violet"] {
   --primary: oklch(0.526 0.247 293);
   --primary-foreground: oklch(0.985 0 0);

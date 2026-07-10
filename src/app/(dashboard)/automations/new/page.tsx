@@ -2,6 +2,7 @@
 
 import { useMemo } from "react"
 import { useSearchParams } from "next/navigation"
+import { useTranslations } from "next-intl"
 
 import {
   AutomationBuilder,
@@ -14,22 +15,27 @@ import type { AutomationStepType, AutomationTriggerType } from "@/types"
 export default function NewAutomationPage() {
   const params = useSearchParams()
   const template = params.get("template") as TemplateSlug | null
+  const tTemplates = useTranslations("Automations.list.templates")
 
   const initial: BuilderInitial = useMemo(() => {
     if (template && AUTOMATION_TEMPLATES[template]) {
       const t = AUTOMATION_TEMPLATES[template]
+      const seedText = tTemplates(`${template}.seedText` as Parameters<typeof tTemplates>[0])
       const steps = expandFromSeeds(
         t.steps.map((seed, idx) => ({
           index: idx,
           step_type: seed.step_type,
-          step_config: seed.step_config as Record<string, unknown>,
+          step_config:
+            seed.step_type === "send_message"
+              ? { ...seed.step_config, text: seedText }
+              : (seed.step_config as Record<string, unknown>),
           branch: seed.branch ?? null,
           parent_index: seed.parent_index ?? null,
         })),
       )
       return {
-        name: t.name,
-        description: t.description,
+        name: tTemplates(`${template}.name` as Parameters<typeof tTemplates>[0]),
+        description: tTemplates(`${template}.description` as Parameters<typeof tTemplates>[0]),
         trigger_type: t.trigger_type,
         trigger_config: t.trigger_config as Record<string, unknown>,
         is_active: false,
@@ -44,7 +50,7 @@ export default function NewAutomationPage() {
       is_active: false,
       steps: [],
     }
-  }, [template])
+  }, [template, tTemplates])
 
   return <AutomationBuilder initial={initial} />
 }

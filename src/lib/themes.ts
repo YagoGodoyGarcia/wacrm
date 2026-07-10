@@ -14,6 +14,7 @@
  */
 
 export const THEME_IDS = [
+  "national",
   "violet",
   "emerald",
   "cobalt",
@@ -23,7 +24,7 @@ export const THEME_IDS = [
 
 export type ThemeId = (typeof THEME_IDS)[number];
 
-export const DEFAULT_THEME: ThemeId = "violet";
+export const DEFAULT_THEME: ThemeId = "national";
 
 export const STORAGE_KEY = "wacrm.theme";
 
@@ -67,6 +68,12 @@ export interface ThemeMeta {
 }
 
 export const THEMES: ReadonlyArray<ThemeMeta> = [
+  {
+    id: "national",
+    name: "Aposta Nacional",
+    tagline: "A identidade oficial da marca.",
+    swatch: "oklch(0.416 0.142 256.4)",
+  },
   {
     id: "violet",
     name: "Violet",
