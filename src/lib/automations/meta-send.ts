@@ -142,6 +142,15 @@ async function sendViaMeta(input: SendInput): Promise<{ whatsapp_message_id: str
 
   const accessToken = decrypt(config.access_token)
 
+  // Per-account demo/simulation flag (migration 037) — replaces the
+  // old global DEMO_MODE env var.
+  const { data: accountRow } = await db
+    .from('accounts')
+    .select('demo_mode')
+    .eq('id', input.accountId)
+    .maybeSingle()
+  const demoMode = accountRow?.demo_mode === true
+
   const attempt = async (phone: string): Promise<string> => {
     if (input.kind === 'template') {
       const r = await sendTemplateMessage({
@@ -151,6 +160,7 @@ async function sendViaMeta(input: SendInput): Promise<{ whatsapp_message_id: str
         templateName: input.templateName,
         language: input.language,
         params: input.params,
+        demoMode,
       })
       return r.messageId
     }
@@ -159,6 +169,7 @@ async function sendViaMeta(input: SendInput): Promise<{ whatsapp_message_id: str
       accessToken,
       to: phone,
       text: input.text,
+      demoMode,
     })
     return r.messageId
   }

@@ -56,6 +56,12 @@ async function throwMetaError(response: Response, fallback: string): Promise<nev
 export interface VerifyPhoneNumberArgs {
   phoneNumberId: string
   accessToken: string
+  /** Per-account override (accounts.demo_mode). Falls back to the
+   *  global DEMO_MODE env var when the caller hasn't been threaded
+   *  through yet. */
+  demoMode?: boolean
+  /** Personalizes the mock verified_name when demoMode is on. */
+  accountName?: string
 }
 
 /**
@@ -65,8 +71,8 @@ export interface VerifyPhoneNumberArgs {
 export async function verifyPhoneNumber(
   args: VerifyPhoneNumberArgs
 ): Promise<MetaPhoneInfo> {
-  const { phoneNumberId, accessToken } = args
-  if (isDemoMode()) return mockPhoneInfo(phoneNumberId)
+  const { phoneNumberId, accessToken, demoMode, accountName } = args
+  if (demoMode ?? isDemoMode()) return mockPhoneInfo(phoneNumberId, accountName)
   const url = `${META_API_BASE}/${phoneNumberId}?fields=id,display_phone_number,verified_name,quality_rating`
   const response = await fetch(url, {
     headers: { Authorization: `Bearer ${accessToken}` },
@@ -112,6 +118,8 @@ export interface RegisterPhoneNumberArgs {
    * pointed at the right setting in the UI.
    */
   pin: string
+  /** Per-account override (accounts.demo_mode). */
+  demoMode?: boolean
 }
 
 export interface RegisterPhoneNumberResult {
@@ -135,8 +143,8 @@ export interface RegisterPhoneNumberResult {
 export async function registerPhoneNumber(
   args: RegisterPhoneNumberArgs
 ): Promise<RegisterPhoneNumberResult> {
-  const { phoneNumberId, accessToken, pin } = args
-  if (isDemoMode()) return mockRegisterResult()
+  const { phoneNumberId, accessToken, pin, demoMode } = args
+  if (demoMode ?? isDemoMode()) return mockRegisterResult()
   const url = `${META_API_BASE}/${phoneNumberId}/register`
   const response = await fetch(url, {
     method: 'POST',
@@ -171,6 +179,8 @@ export async function registerPhoneNumber(
 export interface SubscribeWabaToAppArgs {
   wabaId: string
   accessToken: string
+  /** Per-account override (accounts.demo_mode). */
+  demoMode?: boolean
 }
 
 /**
@@ -180,8 +190,8 @@ export interface SubscribeWabaToAppArgs {
 export async function subscribeWabaToApp(
   args: SubscribeWabaToAppArgs
 ): Promise<void> {
-  const { wabaId, accessToken } = args
-  if (isDemoMode()) return mockSubscribeResult()
+  const { wabaId, accessToken, demoMode } = args
+  if (demoMode ?? isDemoMode()) return mockSubscribeResult()
   const url = `${META_API_BASE}/${wabaId}/subscribed_apps`
   const response = await fetch(url, {
     method: 'POST',
@@ -195,6 +205,10 @@ export async function subscribeWabaToApp(
 export interface GetSubscribedAppsArgs {
   wabaId: string
   accessToken: string
+  /** Per-account override (accounts.demo_mode). */
+  demoMode?: boolean
+  /** Personalizes the mock subscribed-app name when demoMode is on. */
+  accountName?: string
 }
 
 export interface SubscribedApp {
@@ -213,8 +227,8 @@ export interface SubscribedApp {
 export async function getSubscribedApps(
   args: GetSubscribedAppsArgs
 ): Promise<SubscribedApp[]> {
-  const { wabaId, accessToken } = args
-  if (isDemoMode()) return mockSubscribedApps()
+  const { wabaId, accessToken, demoMode, accountName } = args
+  if (demoMode ?? isDemoMode()) return mockSubscribedApps(accountName)
   const url = `${META_API_BASE}/${wabaId}/subscribed_apps`
   const response = await fetch(url, {
     headers: { Authorization: `Bearer ${accessToken}` },
@@ -238,6 +252,8 @@ export interface SendTextMessageArgs {
   /** Meta's message_id of the message being replied to. Adds a `context` field
    *  so WhatsApp renders the new message as a reply with a quote preview. */
   contextMessageId?: string
+  /** Per-account override (accounts.demo_mode). */
+  demoMode?: boolean
 }
 
 /**
@@ -247,8 +263,8 @@ export interface SendTextMessageArgs {
 export async function sendTextMessage(
   args: SendTextMessageArgs
 ): Promise<MetaSendResult> {
-  const { phoneNumberId, accessToken, to, text, contextMessageId } = args
-  if (isDemoMode()) return mockSendResult()
+  const { phoneNumberId, accessToken, to, text, contextMessageId, demoMode } = args
+  if (demoMode ?? isDemoMode()) return mockSendResult()
   const url = `${META_API_BASE}/${phoneNumberId}/messages`
   const body: Record<string, unknown> = {
     messaging_product: 'whatsapp',
@@ -289,6 +305,8 @@ export interface SendMediaMessageArgs {
   /** Document-only. Shown in the recipient's chat as the file name. Ignored for image/video/audio. */
   filename?: string
   contextMessageId?: string
+  /** Per-account override (accounts.demo_mode). */
+  demoMode?: boolean
 }
 
 /**
@@ -306,9 +324,9 @@ export interface SendMediaMessageArgs {
 export async function sendMediaMessage(
   args: SendMediaMessageArgs,
 ): Promise<MetaSendResult> {
-  const { phoneNumberId, accessToken, to, kind, link, caption, filename, contextMessageId } = args
+  const { phoneNumberId, accessToken, to, kind, link, caption, filename, contextMessageId, demoMode } = args
   if (!link) throw new Error('sendMediaMessage requires a link.')
-  if (isDemoMode()) return mockSendResult()
+  if (demoMode ?? isDemoMode()) return mockSendResult()
   const url = `${META_API_BASE}/${phoneNumberId}/messages`
 
   // Audio accepts neither caption nor filename per Meta's spec — adding
@@ -377,6 +395,8 @@ export interface SendTemplateMessageArgs {
   messageParams?: SendTimeParams
   /** Meta's message_id of the message being replied to. */
   contextMessageId?: string
+  /** Per-account override (accounts.demo_mode). */
+  demoMode?: boolean
 }
 
 /**
@@ -403,8 +423,9 @@ export async function sendTemplateMessage(
     template,
     messageParams,
     contextMessageId,
+    demoMode,
   } = args
-  if (isDemoMode()) return mockSendResult()
+  if (demoMode ?? isDemoMode()) return mockSendResult()
   const url = `${META_API_BASE}/${phoneNumberId}/messages`
 
   const templatePayload: Record<string, unknown> = {
@@ -548,6 +569,8 @@ export interface SubmitMessageTemplateArgs {
   wabaId: string
   accessToken: string
   payload: MetaTemplateSubmitPayload
+  /** Per-account override (accounts.demo_mode). */
+  demoMode?: boolean
 }
 
 export interface SubmitMessageTemplateResult {
@@ -572,8 +595,8 @@ export interface SubmitMessageTemplateResult {
 export async function submitMessageTemplate(
   args: SubmitMessageTemplateArgs
 ): Promise<SubmitMessageTemplateResult> {
-  const { wabaId, accessToken, payload } = args
-  if (isDemoMode()) return mockSubmitTemplateResult()
+  const { wabaId, accessToken, payload, demoMode } = args
+  if (demoMode ?? isDemoMode()) return mockSubmitTemplateResult()
   const url = `${META_API_BASE}/${wabaId}/message_templates`
   const response = await fetch(url, {
     method: 'POST',
@@ -605,6 +628,8 @@ export interface EditMessageTemplateArgs {
   components: MetaTemplateSubmitPayload['components']
   /** Optional — only certain category transitions are allowed by Meta. */
   category?: MetaTemplateSubmitPayload['category']
+  /** Per-account override (accounts.demo_mode). */
+  demoMode?: boolean
 }
 
 export interface EditMessageTemplateResult {
@@ -624,8 +649,8 @@ export interface EditMessageTemplateResult {
 export async function editMessageTemplate(
   args: EditMessageTemplateArgs
 ): Promise<EditMessageTemplateResult> {
-  const { metaTemplateId, accessToken, components, category } = args
-  if (isDemoMode()) return mockEditTemplateResult()
+  const { metaTemplateId, accessToken, components, category, demoMode } = args
+  if (demoMode ?? isDemoMode()) return mockEditTemplateResult()
   const body: Record<string, unknown> = { components }
   if (category) body.category = category
   const response = await fetch(`${META_API_BASE}/${metaTemplateId}`, {
@@ -653,6 +678,8 @@ export interface DeleteMessageTemplateArgs {
    * to scope to a single variant.
    */
   metaTemplateId?: string
+  /** Per-account override (accounts.demo_mode). */
+  demoMode?: boolean
 }
 
 /**
@@ -663,8 +690,8 @@ export interface DeleteMessageTemplateArgs {
 export async function deleteMessageTemplate(
   args: DeleteMessageTemplateArgs
 ): Promise<void> {
-  const { wabaId, accessToken, name, metaTemplateId } = args
-  if (isDemoMode()) return
+  const { wabaId, accessToken, name, metaTemplateId, demoMode } = args
+  if (demoMode ?? isDemoMode()) return
   const params = new URLSearchParams({ name })
   if (metaTemplateId) params.set('hsm_id', metaTemplateId)
   const url = `${META_API_BASE}/${wabaId}/message_templates?${params.toString()}`
@@ -692,6 +719,8 @@ export interface SendReactionMessageArgs {
   targetMessageId: string
   /** Single emoji, or empty string to remove an existing reaction. */
   emoji: string
+  /** Per-account override (accounts.demo_mode). */
+  demoMode?: boolean
 }
 
 /**
@@ -701,8 +730,8 @@ export interface SendReactionMessageArgs {
 export async function sendReactionMessage(
   args: SendReactionMessageArgs
 ): Promise<MetaSendResult> {
-  const { phoneNumberId, accessToken, to, targetMessageId, emoji } = args
-  if (isDemoMode()) return mockSendResult()
+  const { phoneNumberId, accessToken, to, targetMessageId, emoji, demoMode } = args
+  if (demoMode ?? isDemoMode()) return mockSendResult()
   const url = `${META_API_BASE}/${phoneNumberId}/messages`
   const response = await fetch(url, {
     method: 'POST',
@@ -775,6 +804,8 @@ export interface SendInteractiveButtonsArgs {
   buttons: InteractiveButton[]
   /** Meta's message_id of the message being replied to (quote preview). */
   contextMessageId?: string
+  /** Per-account override (accounts.demo_mode). */
+  demoMode?: boolean
 }
 
 /**
@@ -790,7 +821,7 @@ export async function sendInteractiveButtons(
 ): Promise<MetaSendResult> {
   const {
     phoneNumberId, accessToken, to,
-    bodyText, headerText, footerText, buttons, contextMessageId,
+    bodyText, headerText, footerText, buttons, contextMessageId, demoMode,
   } = args
   validateInteractiveBody(bodyText)
   validateInteractiveHeaderFooter(headerText, footerText)
@@ -839,7 +870,7 @@ export async function sendInteractiveButtons(
   }
   if (contextMessageId) body.context = { message_id: contextMessageId }
 
-  if (isDemoMode()) return mockSendResult()
+  if (demoMode ?? isDemoMode()) return mockSendResult()
   const url = `${META_API_BASE}/${phoneNumberId}/messages`
   const response = await fetch(url, {
     method: 'POST',
@@ -886,6 +917,8 @@ export interface SendInteractiveListArgs {
    */
   sections: InteractiveListSection[]
   contextMessageId?: string
+  /** Per-account override (accounts.demo_mode). */
+  demoMode?: boolean
 }
 
 /**
@@ -899,7 +932,7 @@ export async function sendInteractiveList(
 ): Promise<MetaSendResult> {
   const {
     phoneNumberId, accessToken, to,
-    bodyText, buttonLabel, headerText, footerText, sections, contextMessageId,
+    bodyText, buttonLabel, headerText, footerText, sections, contextMessageId, demoMode,
   } = args
   validateInteractiveBody(bodyText)
   validateInteractiveHeaderFooter(headerText, footerText)
@@ -972,7 +1005,7 @@ export async function sendInteractiveList(
   }
   if (contextMessageId) body.context = { message_id: contextMessageId }
 
-  if (isDemoMode()) return mockSendResult()
+  if (demoMode ?? isDemoMode()) return mockSendResult()
   const url = `${META_API_BASE}/${phoneNumberId}/messages`
   const response = await fetch(url, {
     method: 'POST',

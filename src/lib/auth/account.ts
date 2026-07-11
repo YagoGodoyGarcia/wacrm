@@ -87,8 +87,32 @@ export interface AccountContext {
   accountId: string;
   /** Caller's role within their account. */
   role: AccountRole;
-  /** Lightweight account meta — id + name. */
-  account: { id: string; name: string };
+  /** Lightweight account meta — id + name + demo_mode. */
+  account: { id: string; name: string; demo_mode: boolean };
+}
+
+/**
+ * Look up a single account's `demo_mode` flag (migration 037) given
+ * only an id — for call sites that already have `accountId` in scope
+ * (service-role senders, background jobs) but not a full
+ * `AccountContext`. Fails closed (returns false / real-API behaviour)
+ * on any lookup error so a transient DB hiccup can never accidentally
+ * put a real customer's send through the demo mock.
+ */
+export async function getAccountDemoMode(
+  db: SupabaseClient,
+  accountId: string,
+): Promise<boolean> {
+  const { data, error } = await db
+    .from("accounts")
+    .select("demo_mode")
+    .eq("id", accountId)
+    .maybeSingle();
+  if (error) {
+    console.error("[getAccountDemoMode] lookup error:", error.message);
+    return false;
+  }
+  return data?.demo_mode === true;
 }
 
 /**
@@ -149,7 +173,7 @@ export async function getCurrentAccount(): Promise<AccountContext> {
   // RLS, so it stays robust against cache staleness and older schemas.
   const { data: account, error: accountErr } = await supabase
     .from("accounts")
-    .select("id, name")
+    .select("id, name, demo_mode")
     .eq("id", data.account_id)
     .maybeSingle();
 
@@ -168,7 +192,11 @@ export async function getCurrentAccount(): Promise<AccountContext> {
     userId: user.id,
     accountId: data.account_id,
     role: data.account_role,
-    account: { id: account.id, name: account.name },
+    account: {
+      id: account.id,
+      name: account.name,
+      demo_mode: account.demo_mode === true,
+    },
   };
 }
 

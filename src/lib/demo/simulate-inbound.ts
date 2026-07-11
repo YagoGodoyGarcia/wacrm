@@ -1,5 +1,4 @@
 import crypto from 'node:crypto'
-import { isDemoMode } from '@/lib/whatsapp/demo-mock'
 import { processMessage, handleStatusUpdate } from '@/lib/webhooks/process-inbound'
 import { supabaseAdmin } from '@/lib/flows/admin-client'
 
@@ -37,12 +36,15 @@ function fakeTimestamp(): string {
 
 /**
  * Simulate Meta's delivery/read webhook ticks for a demo-mode send.
- * No-ops outside DEMO_MODE. Fire-and-forget — timer callbacks log and
- * swallow their own errors, matching the real webhook's best-effort
- * status handling.
+ * No-ops unless `demoMode` is true — callers resolve this from the
+ * sending account's own `accounts.demo_mode` flag (migration 037)
+ * rather than a global env var, so demo accounts and the real
+ * customer account can coexist in the same deployment. Fire-and-
+ * forget — timer callbacks log and swallow their own errors, matching
+ * the real webhook's best-effort status handling.
  */
-export function scheduleDemoStatusTicks(waMessageId: string): void {
-  if (!isDemoMode()) return
+export function scheduleDemoStatusTicks(waMessageId: string, demoMode: boolean): void {
+  if (!demoMode) return
 
   setTimeout(() => {
     handleStatusUpdate({
@@ -69,6 +71,13 @@ interface InjectReplyParams {
   contactId: string
   /** Fallback if the contact row lookup fails for some reason. */
   contactPhone?: string
+}
+
+interface MaybeScheduleAutoReplyParams extends InjectReplyParams {
+  /** Resolved from the account's `accounts.demo_mode` flag. No-ops
+   *  when false — see `scheduleDemoStatusTicks` for the same pattern. */
+  demoMode: boolean
+  probability?: number
 }
 
 async function injectReply(params: InjectReplyParams, text: string): Promise<void> {
@@ -108,15 +117,15 @@ const AUTO_REPLY_COOLDOWN_MS = 5 * 60 * 1000
 
 /**
  * With `probability` chance, schedule a simulated customer reply
- * 10-40s from now. No-ops outside DEMO_MODE. Used after a demo-mode
- * template send (broadcast fan-out or a one-off template) so a live
- * demo shows some recipients replying on their own, feeding the
- * reactivation automation end-to-end.
+ * 10-40s from now. No-ops unless `params.demoMode` is true. Used
+ * after a demo-mode template send (broadcast fan-out or a one-off
+ * template) so a live demo shows some recipients replying on their
+ * own, feeding the reactivation automation end-to-end.
  */
 export function maybeScheduleAutoReply(
-  params: InjectReplyParams & { probability?: number },
+  params: MaybeScheduleAutoReplyParams,
 ): void {
-  if (!isDemoMode()) return
+  if (!params.demoMode) return
   const probability = params.probability ?? 0.4
   if (Math.random() > probability) return
 

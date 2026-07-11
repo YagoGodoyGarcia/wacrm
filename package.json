@@ -38,7 +38,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "demo:setup": "tsx scripts/demo-setup.ts",
-    "demo:reset": "tsx scripts/demo-setup.ts --reset"
+    "demo:reset": "tsx scripts/demo-setup.ts --reset",
+    "clone-account": "tsx scripts/clone-account-template.ts"
   },
   "dependencies": {
     "@base-ui/react": "^1.6.0",

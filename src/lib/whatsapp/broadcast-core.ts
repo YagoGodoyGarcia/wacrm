@@ -78,6 +78,10 @@ export interface BroadcastPlan {
    *  (status ticks + simulated replies) fired from deliverBroadcast. */
   accountId: string;
   configOwnerUserId: string;
+  /** Resolved once here from `accounts.demo_mode` (migration 037) so
+   *  every send in deliverBroadcast uses the same per-account flag
+   *  instead of a global env var. */
+  demoMode: boolean;
 }
 
 const MAX_RECIPIENTS = 1000;
@@ -130,6 +134,14 @@ export async function createBroadcast(
     );
   }
   const accessToken = decrypt(config.access_token);
+
+  // Per-account demo/simulation flag (migration 037).
+  const { data: accountRow } = await db
+    .from('accounts')
+    .select('demo_mode')
+    .eq('id', accountId)
+    .maybeSingle();
+  const demoMode = accountRow?.demo_mode === true;
 
   // Template row (once) for header/button components; guard a
   // malformed local row rather than N identical opaque failures.
@@ -256,6 +268,7 @@ export async function createBroadcast(
     rejected,
     accountId,
     configOwnerUserId: config.user_id,
+    demoMode,
   };
 }
 
@@ -293,6 +306,7 @@ export async function deliverBroadcast(
           language: plan.templateLanguage,
           template: plan.templateRow ?? undefined,
           params: recipient.params,
+          demoMode: plan.demoMode,
         });
         sentMessageId = result.messageId;
         lastError = null;
@@ -317,13 +331,15 @@ export async function deliverBroadcast(
         })
         .eq('id', recipient.recipientRowId);
 
-      // Demo mode "looks alive" scheduling — no-ops outside DEMO_MODE.
-      scheduleDemoStatusTicks(sentMessageId);
+      // Demo mode "looks alive" scheduling — no-ops unless this
+      // account has demo_mode on (migration 037).
+      scheduleDemoStatusTicks(sentMessageId, plan.demoMode);
       maybeScheduleAutoReply({
         accountId: plan.accountId,
         configOwnerUserId: plan.configOwnerUserId,
         contactId: recipient.contactId,
         contactPhone: recipient.phone,
+        demoMode: plan.demoMode,
       });
     } else {
       await db

@@ -151,6 +151,14 @@ export async function PATCH(
       }
       const accessToken = decrypt(config.access_token)
 
+      // Per-account demo/simulation flag (migration 037).
+      const { data: accountRow } = await supabase
+        .from('accounts')
+        .select('demo_mode')
+        .eq('id', accountId)
+        .maybeSingle()
+      const demoMode = accountRow?.demo_mode === true
+
       // Image headers need a fresh Resumable-Upload handle on every edit
       // (Meta replaces components wholesale). Derive from header_media_url.
       try {
@@ -168,6 +176,7 @@ export async function PATCH(
           metaTemplateId: existing.meta_template_id,
           accessToken,
           components: metaPayload.components,
+          demoMode,
         })
       } catch (e) {
         const message = e instanceof Error ? e.message : 'Meta edit failed.'
@@ -290,12 +299,22 @@ export async function DELETE(
         )
       }
       const accessToken = decrypt(config.access_token)
+
+      // Per-account demo/simulation flag (migration 037).
+      const { data: accountRow } = await supabase
+        .from('accounts')
+        .select('demo_mode')
+        .eq('id', accountId)
+        .maybeSingle()
+      const demoMode = accountRow?.demo_mode === true
+
       try {
         await deleteMessageTemplate({
           wabaId: config.waba_id,
           accessToken,
           name: existing.name,
           metaTemplateId: existing.meta_template_id,
+          demoMode,
         })
       } catch (e) {
         const message = e instanceof Error ? e.message : 'Meta delete failed.'

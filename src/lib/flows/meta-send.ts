@@ -93,12 +93,21 @@ export async function engineSendText(
 
   const accessToken = decrypt(config.access_token)
 
+  // Per-account demo/simulation flag (migration 037).
+  const { data: accountRow } = await db
+    .from('accounts')
+    .select('demo_mode')
+    .eq('id', args.accountId)
+    .maybeSingle()
+  const demoMode = accountRow?.demo_mode === true
+
   const attempt = async (phone: string): Promise<string> => {
     const r = await sendTextMessage({
       phoneNumberId: config.phone_number_id,
       accessToken,
       to: phone,
       text: args.text,
+      demoMode,
     })
     return r.messageId
   }
@@ -203,6 +212,14 @@ export async function engineSendMedia(
 
   const accessToken = decrypt(config.access_token)
 
+  // Per-account demo/simulation flag (migration 037).
+  const { data: accountRow } = await db
+    .from('accounts')
+    .select('demo_mode')
+    .eq('id', args.accountId)
+    .maybeSingle()
+  const demoMode = accountRow?.demo_mode === true
+
   const attempt = async (phone: string): Promise<string> => {
     const r = await sendMediaMessage({
       phoneNumberId: config.phone_number_id,
@@ -212,6 +229,7 @@ export async function engineSendMedia(
       link: args.link,
       caption: args.caption,
       filename: args.filename,
+      demoMode,
     })
     return r.messageId
   }
@@ -355,6 +373,14 @@ async function sendInteractiveViaMeta(
 
   const accessToken = decrypt(config.access_token)
 
+  // Per-account demo/simulation flag (migration 037).
+  const { data: accountRow } = await db
+    .from('accounts')
+    .select('demo_mode')
+    .eq('id', input.accountId)
+    .maybeSingle()
+  const demoMode = accountRow?.demo_mode === true
+
   const attempt = async (phone: string): Promise<string> => {
     if (input.kind === 'buttons') {
       const r = await sendInteractiveButtons({
@@ -365,6 +391,7 @@ async function sendInteractiveViaMeta(
         buttons: input.buttons,
         headerText: input.headerText,
         footerText: input.footerText,
+        demoMode,
       })
       return r.messageId
     }
@@ -377,6 +404,7 @@ async function sendInteractiveViaMeta(
       sections: input.sections,
       headerText: input.headerText,
       footerText: input.footerText,
+      demoMode,
     })
     return r.messageId
   }

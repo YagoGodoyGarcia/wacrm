@@ -125,6 +125,14 @@ export async function POST(request: Request) {
     const accessToken = decrypt(config.access_token);
     const sanitizedPhone = sanitizePhoneForMeta(contact.phone);
 
+    // Per-account demo/simulation flag (migration 037).
+    const { data: accountRow } = await supabase
+      .from('accounts')
+      .select('demo_mode')
+      .eq('id', accountId)
+      .maybeSingle();
+    const demoMode = accountRow?.demo_mode === true;
+
     try {
       await sendReactionMessage({
         phoneNumberId: config.phone_number_id,
@@ -132,6 +140,7 @@ export async function POST(request: Request) {
         to: sanitizedPhone,
         targetMessageId: targetMessage.message_id,
         emoji,
+        demoMode,
       });
     } catch (err) {
       const message =

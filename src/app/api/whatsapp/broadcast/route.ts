@@ -152,6 +152,14 @@ export async function POST(request: Request) {
 
     const accessToken = decrypt(config.access_token)
 
+    // Per-account demo/simulation flag (migration 037).
+    const { data: accountRow } = await supabase
+      .from('accounts')
+      .select('demo_mode')
+      .eq('id', accountId)
+      .maybeSingle()
+    const demoMode = accountRow?.demo_mode === true
+
     // Load the template row once so sendTemplateMessage can build
     // header + button components on each iteration. Loading inside
     // the loop would N+1 against Supabase for every recipient.
@@ -209,6 +217,7 @@ export async function POST(request: Request) {
             template: templateRow ?? undefined,
             messageParams: recipient.messageParams,
             params: recipient.params ?? [],
+            demoMode,
           })
           sentMessageId = result.messageId
           lastError = null

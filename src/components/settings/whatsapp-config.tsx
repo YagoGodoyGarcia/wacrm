@@ -44,7 +44,7 @@ export function WhatsAppConfig() {
   // context and key every read off it — so a teammate who just
   // joined an account sees the inviter's saved config without
   // having to re-enter anything.
-  const { user, accountId, loading: authLoading, profileLoading } = useAuth();
+  const { user, accountId, account, loading: authLoading, profileLoading } = useAuth();
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -477,7 +477,7 @@ export function WhatsAppConfig() {
                   }
                 >
                   {isRegistered
-                    ? t('registered')
+                    ? t('registered', { accountName: account?.name || 'CRM' })
                     : t('notRegistered')}
                 </AlertTitle>
               </div>

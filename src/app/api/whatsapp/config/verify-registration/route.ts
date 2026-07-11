@@ -61,6 +61,15 @@ export async function GET() {
     .eq('account_id', accountId)
     .maybeSingle()
 
+  // Per-account demo/simulation flag (migration 037) — replaces the
+  // old global DEMO_MODE env var.
+  const { data: accountRow } = await supabase
+    .from('accounts')
+    .select('demo_mode')
+    .eq('id', accountId)
+    .maybeSingle()
+  const demoMode = accountRow?.demo_mode === true
+
   if (!config) {
     return NextResponse.json({
       live: false,
@@ -104,6 +113,7 @@ export async function GET() {
     await verifyPhoneNumber({
       phoneNumberId: config.phone_number_id,
       accessToken,
+      demoMode,
     })
     checks.phone_metadata_ok = true
   } catch (err) {
@@ -118,6 +128,7 @@ export async function GET() {
       const subs = await getSubscribedApps({
         wabaId: config.waba_id,
         accessToken,
+        demoMode,
       })
       // Meta returns the apps subscribed to this WABA. If the list
       // is non-empty, OUR app is in there (the access_token we used

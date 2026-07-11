@@ -138,13 +138,23 @@ export async function POST(request: Request) {
       )
     }
 
-    // DEMO_MODE implies dry-run too — a demo template submission
-    // shouldn't need a real waba_id/access_token or attempt the
-    // (unmocked) resumable media upload for image headers.
+    // This account's demo/simulation flag (migration 037) implies
+    // dry-run too — a demo account's template submission shouldn't
+    // need a real waba_id/access_token or attempt the (unmocked)
+    // resumable media upload for image headers. Resolved per-account
+    // rather than the old global DEMO_MODE env var so a demo account
+    // and the real customer account can coexist in one deployment.
+    const { data: accountRow } = await supabase
+      .from('accounts')
+      .select('demo_mode')
+      .eq('id', accountId)
+      .maybeSingle()
+    const demoMode = accountRow?.demo_mode === true
+
     const dryRun =
       process.env.WHATSAPP_TEMPLATES_DRY_RUN === 'true' ||
       process.env.WHATSAPP_TEMPLATES_DRY_RUN === '1' ||
-      process.env.DEMO_MODE === 'true'
+      demoMode
 
     let metaTemplateId: string
     let metaStatus: string
@@ -198,6 +208,7 @@ export async function POST(request: Request) {
           wabaId: config.waba_id,
           accessToken,
           payload: metaPayload,
+          demoMode,
         })
         metaTemplateId = meta.id
         metaStatus = meta.status

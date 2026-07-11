@@ -31,6 +31,26 @@ async function resolveAccountId(
   return data.account_id as string
 }
 
+/**
+ * Resolve the account's `demo_mode` flag + display name (migration
+ * 037) so every Meta call below simulates or hits the real API based
+ * on THIS account's own setting, not a global env var — a demo
+ * account and the real customer account can now coexist in the same
+ * deployment. Fails closed (real-API behaviour) on any lookup error.
+ */
+async function resolveAccountDemoInfo(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  accountId: string,
+): Promise<{ demoMode: boolean; accountName?: string }> {
+  const { data, error } = await supabase
+    .from('accounts')
+    .select('name, demo_mode')
+    .eq('id', accountId)
+    .maybeSingle()
+  if (error || !data) return { demoMode: false }
+  return { demoMode: data.demo_mode === true, accountName: data.name }
+}
+
 // Lazy-initialised service-role client. We need it to detect a
 // phone_number_id already claimed by a *different* user — under RLS,
 // the user's own session can't see other users' rows, so the conflict
@@ -129,11 +149,16 @@ export async function GET() {
       )
     }
 
-    // Validate credentials against Meta
+    // Validate credentials against Meta — demoMode/accountName come
+    // from THIS account's own accounts.demo_mode flag, not a global
+    // env var (migration 037).
+    const { demoMode, accountName } = await resolveAccountDemoInfo(supabase, accountId)
     try {
       const phoneInfo = await verifyPhoneNumber({
         phoneNumberId: config.phone_number_id,
         accessToken,
+        demoMode,
+        accountName,
       })
       return NextResponse.json({ connected: true, phone_info: phoneInfo })
     } catch (err) {
@@ -235,12 +260,17 @@ export async function POST(request: Request) {
       )
     }
 
-    // Verify credentials with Meta BEFORE saving
+    // Verify credentials with Meta BEFORE saving — demoMode/accountName
+    // come from THIS account's own accounts.demo_mode flag (migration
+    // 037), not a global env var.
+    const { demoMode, accountName } = await resolveAccountDemoInfo(supabase, accountId)
     let phoneInfo
     try {
       phoneInfo = await verifyPhoneNumber({
         phoneNumberId: phone_number_id,
         accessToken: access_token,
+        demoMode,
+        accountName,
       })
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Unknown Meta API error'
@@ -315,6 +345,7 @@ export async function POST(request: Request) {
             phoneNumberId: phone_number_id,
             accessToken: access_token,
             pin,
+            demoMode,
           })
           registeredAt = new Date().toISOString()
         } catch (err) {
@@ -339,6 +370,7 @@ export async function POST(request: Request) {
         await subscribeWabaToApp({
           wabaId: waba_id,
           accessToken: access_token,
+          demoMode,
         })
         subscribedAppsAt = new Date().toISOString()
       } catch (err) {

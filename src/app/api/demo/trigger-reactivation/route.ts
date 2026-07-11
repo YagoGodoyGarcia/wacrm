@@ -22,12 +22,15 @@ const INACTIVE_TAG_NAME = 'inativo 60+ dias';
  * touching the real tag-toggle components at all.
  */
 export async function POST(request: Request) {
-  if (process.env.DEMO_MODE !== 'true') {
-    return NextResponse.json({ error: 'Not found' }, { status: 404 });
-  }
-
   try {
-    const { supabase, accountId } = await getCurrentAccount();
+    // Resolve the account FIRST — the gate below checks THIS
+    // account's own `demo_mode` flag (migration 037), not a global
+    // env var, so this route stays demo-only per-account even when
+    // the deployment also hosts a real, non-demo customer account.
+    const { supabase, accountId, account } = await getCurrentAccount();
+    if (!account.demo_mode) {
+      return NextResponse.json({ error: 'Not found' }, { status: 404 });
+    }
 
     const body = await request.json().catch(() => ({}));
     const contactId =

@@ -13,16 +13,21 @@ import { simulateReplyNow } from '@/lib/demo/simulate-inbound';
  * the "reactivation automation" narrative live during a demo instead
  * of waiting on the background auto-reply timer.
  *
- * 404s outright when DEMO_MODE isn't on — this route doesn't exist in
- * production.
+ * 404s outright unless the caller's account has `demo_mode` on
+ * (migration 037) — resolved per-account so this route stays
+ * demo-only even in a deployment that also hosts a real, non-demo
+ * customer account.
  */
 export async function POST(request: Request) {
-  if (process.env.DEMO_MODE !== 'true') {
-    return NextResponse.json({ error: 'Not found' }, { status: 404 });
-  }
-
   try {
-    const { supabase, accountId } = await getCurrentAccount();
+    // Resolve the account FIRST — the gate below checks THIS
+    // account's own `demo_mode` flag (migration 037), not a global
+    // env var, so this route stays demo-only per-account even when
+    // the deployment also hosts a real, non-demo customer account.
+    const { supabase, accountId, account } = await getCurrentAccount();
+    if (!account.demo_mode) {
+      return NextResponse.json({ error: 'Not found' }, { status: 404 });
+    }
 
     const body = await request.json().catch(() => ({}));
     const conversationId =

@@ -175,7 +175,7 @@ export function MessageThread({
   const tTimer = useTranslations("Inbox.sessionTimer");
   const tQuote = useTranslations("Inbox.replyQuote");
 
-  const { user } = useAuth();
+  const { user, account } = useAuth();
   const { getPresence, getRow, now } = usePresence();
   const [loading, setLoading] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -1015,8 +1015,11 @@ export function MessageThread({
           {/* Demo-mode only — fires a simulated customer reply into this
               conversation right now, via the real inbound-processing
               pipeline (automations/flows/dashboard all react normally).
-              Only rendered when NEXT_PUBLIC_DEMO_MODE is set. */}
-          {process.env.NEXT_PUBLIC_DEMO_MODE === "true" && (
+              Only rendered for accounts with demo_mode on (migration
+              037) — previously a global NEXT_PUBLIC_DEMO_MODE build-time
+              flag, which couldn't distinguish a demo account from a real
+              one in the same deployment. */}
+          {account?.demo_mode === true && (
             <button
               type="button"
               onClick={handleSimulateReply}
@@ -1030,7 +1033,7 @@ export function MessageThread({
             </button>
           )}
 
-          {process.env.NEXT_PUBLIC_DEMO_MODE === "true" && (
+          {account?.demo_mode === true && (
             <button
               type="button"
               onClick={handleTriggerReactivation}

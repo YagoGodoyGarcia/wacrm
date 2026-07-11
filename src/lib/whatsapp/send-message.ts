@@ -265,6 +265,16 @@ export async function sendMessageToConversation(
 
   const accessToken = decrypt(config.access_token);
 
+  // Per-account demo/simulation flag (migration 037) — replaces the
+  // old global DEMO_MODE env var so a real customer account and demo
+  // accounts can coexist in the same deployment.
+  const { data: accountRow } = await db
+    .from('accounts')
+    .select('demo_mode')
+    .eq('id', accountId)
+    .maybeSingle();
+  const demoMode = accountRow?.demo_mode === true;
+
   // Self-heal legacy CBC ciphertexts. Fire-and-forget; idempotent.
   if (isLegacyFormat(config.access_token)) {
     void db
@@ -342,6 +352,7 @@ export async function sendMessageToConversation(
         messageParams: templateMessageParams ?? undefined,
         params: templateParams || [],
         contextMessageId,
+        demoMode,
       });
       return result.messageId;
     }
@@ -355,6 +366,7 @@ export async function sendMessageToConversation(
         caption: contentText || undefined,
         filename: filename || undefined,
         contextMessageId,
+        demoMode,
       });
       return result.messageId;
     }
@@ -370,6 +382,7 @@ export async function sendMessageToConversation(
           footerText: p.footer || undefined,
           buttons: p.buttons,
           contextMessageId,
+          demoMode,
         });
         return result.messageId;
       }
@@ -383,6 +396,7 @@ export async function sendMessageToConversation(
         footerText: p.footer || undefined,
         sections: p.sections,
         contextMessageId,
+        demoMode,
       });
       return result.messageId;
     }
@@ -392,6 +406,7 @@ export async function sendMessageToConversation(
       to: phone,
       text: contentText!,
       contextMessageId,
+      demoMode,
     });
     return result.messageId;
   };
@@ -431,14 +446,16 @@ export async function sendMessageToConversation(
     throw new SendMessageError('meta_error', `Meta API error: ${message}`, 502);
   }
 
-  // Demo mode "looks alive" scheduling — no-ops outside DEMO_MODE.
-  scheduleDemoStatusTicks(waMessageId);
+  // Demo mode "looks alive" scheduling — no-ops unless this account
+  // has demo_mode on (migration 037).
+  scheduleDemoStatusTicks(waMessageId, demoMode);
   if (messageType === 'template') {
     maybeScheduleAutoReply({
       accountId,
       configOwnerUserId: config.user_id,
       contactId: contact.id,
       contactPhone: workingPhone,
+      demoMode,
     });
   }
 

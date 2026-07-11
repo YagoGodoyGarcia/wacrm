@@ -1476,7 +1476,7 @@
       "notConnected": "Não Conectado",
       "connectedDesc": "Seu token de acesso autentica com a Meta. Veja o status de Registro abaixo para saber se os webhooks estão realmente ligados.",
       "notConnectedDesc": "Configure suas credenciais da Meta API abaixo para conectar sua conta do WhatsApp Business.",
-      "registered": "Registrado — a Meta vai entregar eventos ao Aposta Nacional CRM",
+      "registered": "Registrado — a Meta vai entregar eventos ao {accountName}",
       "notRegistered": "Não registrado — a Meta não vai entregar eventos",
       "verifyWithMeta": "Verificar com a Meta",
       "subscribedSince": "Inscrito desde {date}. Clique em Verificar com a Meta se os eventos pararem de chegar.",
